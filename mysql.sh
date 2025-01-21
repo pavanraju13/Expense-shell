@@ -14,6 +14,9 @@ R="\e[31m" # Red for failure
 B="\e[34m" # Blue for informational
 N="\e[0m"  # Reset to default
 
+echo " MYSQL PASSWORD :"
+read -s "mysql_root_password :"
+
 
 # Function to validate command execution
 VALIDATE() {
@@ -40,23 +43,16 @@ systemctl start mysqld | tee -a "$LOG_FILE"
 
 VALIDATE $? "STARTING MYSQL"
 
-#mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
-#VALIDATE $? "Setting username and Password"
-
-#below command is used for idempotency
-
-mysql -h 172.31.85.105 -uroot -pExpenseApp@1 -e 'SHOW DATABASES;'| tee -a "$LOG_FILE"
-
-if [ $? -ne 0 ]
-then
-mysql_secure_installation --set-root-pass ExpenseApp@1 
-
-VALIDATE $? "Root password setup"
-
-else 
-echo -e "mysql password is already set $R ..Skipping $N"
-
+# Step 12: Configure MySQL root password
+mysql -h 172.31.85.105 -uroot -p${mysql_root_password} -e 'SHOW DATABASES;' &>>"$LOG_FILE"
+if [ $? -ne 0 ]; then
+    mysql_secure_installation --set-root-pass${mysql_root_password} &>>"$LOG_FILE"
+    VALIDATE $? "Setting up MySQL root password"
+else
+    echo -e "${B}MySQL root password is already set. Skipping.${N}" | tee -a "$LOG_FILE"
 fi
+
+
 
 
 echo "Thank you"
