@@ -42,5 +42,5 @@ VALIDATE $? "STARTING MYSQL"
 
 mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
 
-validate $? "Setting username and Password"
+VALIDATE $? "Setting username and Password"
 
