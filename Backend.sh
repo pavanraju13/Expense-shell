@@ -12,6 +12,9 @@ R="\e[31m" # Red for failure
 B="\e[34m" # Blue for informational
 N="\e[0m"  # Reset to default
 
+echo " MYSQL PASSWORD :"
+read -s mysql_root_password
+
 echo "Script started executing at timestamp: $TIME_STAMP" | tee -a "$LOG_FILE"
 
 # Function to validate command execution
@@ -95,14 +98,10 @@ VALIDATE $? "Enabling backend service"
 dnf install mysql -y &>>"$LOG_FILE"
 VALIDATE $? "Installing MySQL client"
 
-# Step 12: Configure MySQL root password
-mysql -h 172.31.85.105 -uroot -pExpenseApp@1 -e 'SHOW DATABASES;' &>>"$LOG_FILE"
-if [ $? -ne 0 ]; then
-    mysql_secure_installation --set-root-pass ExpenseApp@1 &>>"$LOG_FILE"
-    VALIDATE $? "Setting up MySQL root password"
-else
-    echo -e "${B}MySQL root password is already set. Skipping.${N}" | tee -a "$LOG_FILE"
-fi
+
+mysql -h 172.31.85.105  -uroot -p${mysql_root_password} < /app/schema/backend.sql &>>"$LOG_FILE"
+VALIDATE $? "Setting up MySQL root password"
+
 
 # Step 13: Restart backend service after configuration
 systemctl restart backend &>>"$LOG_FILE"
