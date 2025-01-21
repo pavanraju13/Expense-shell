@@ -99,8 +99,9 @@ dnf install mysql -y &>>"$LOG_FILE"
 VALIDATE $? "Installing MySQL client"
 
 
-mysql -h 172.31.85.105  -uroot -p${mysql_root_password} < /app/schema/backend.sql &>>"$LOG_FILE"
-VALIDATE $? "Setting up MySQL root password"
+mysql -h 172.31.85.105 -uroot -p${mysql_root_password} < /app/schema/backend.sql &>>"$LOG_FILE"
+
+VALIDATE $? "To load schema from backend to mysql"
 
 
 # Step 13: Restart backend service after configuration
