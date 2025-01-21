@@ -90,7 +90,7 @@ dnf install mysql -y | tee -a "$LOG_FILE"
 
 VALIDATE $? "TO load schema we require mysql client to install"
 
-mysql -h <MYSQL-SERVER-IPADDRESS> -uroot -pExpenseApp@1 < /app/schema/backend.sql | tee -a "$LOG_FILE"
+mysql -h 172.31.85.105 -uroot -pExpenseApp@1 < /app/schema/backend.sql | tee -a "$LOG_FILE"
 
 VALIDATE $? "to load the schema from backend.sql to database server"
 
