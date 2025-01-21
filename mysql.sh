@@ -15,7 +15,7 @@ B="\e[34m" # Blue for informational
 N="\e[0m"  # Reset to default
 
 echo " MYSQL PASSWORD :"
-read -s "mysql_root_password :"
+read -s mysql_root_password
 
 
 # Function to validate command execution
