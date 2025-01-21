@@ -30,17 +30,17 @@ if [ $ID -ne 0 ]; then
     echo -e "${R}You must run this script as root or using sudo.${N}" | tee -a "$LOG_FILE"
     exit 1
 fi
-dnf install mysql-server -y &>>$LOG_FILE
+dnf install mysql-server -y | tee -a "$LOG_FILE"
 
 VALIDATE $? "Installing mysql"
 systemctl enable mysqld
 VALIDATE $? "Enabling mysql"
 
-systemctl start mysqld &>>$LOGFILE
+systemctl start mysqld | tee -a "$LOG_FILE"
 
 VALIDATE $? "STARTING MYSQL"
 
-mysql_secure_installation --set-root-pass ExpenseApp@1 &>>$LOGFILE
+mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
 
 validate $? "Setting username and Password"
 
