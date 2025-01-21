@@ -40,7 +40,23 @@ systemctl start mysqld | tee -a "$LOG_FILE"
 
 VALIDATE $? "STARTING MYSQL"
 
-mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
+#mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
+#VALIDATE $? "Setting username and Password"
 
-VALIDATE $? "Setting username and Password"
+#below command is used for idempotency
+
+mysql -h 172.31.85.105 -uroot -pExpenseApp@1 -e 'SHOW DATABASES;'| tee -a "$LOG_FILE"
+
+if [ $? -ne 0 ]
+then
+mysql_secure_installation --set-root-pass ExpenseApp@1 
+
+VALIDATE $? "Root password setup"
+
+else 
+echo "mysql password is already set $R ..Skipping $N"
+
+fi
+
+
 
