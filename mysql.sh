@@ -1,9 +1,9 @@
 #!/bin/bash
 
-ID=$( id -u )
-TIME_STAMP=$( date +%F-%H-%M-%S )
-SCRIPTNAME=$( basename "$0" | cut -d "." f1 )
-LOG_FILE="\tmp\${SCRIPTNAME}+${TIME_STAMP}}.log"
+ID=$(id -u) # Get the current user ID
+TIME_STAMP=$(date +%F-%H-%M-%S) # Create a timestamp in the format YYYY-MM-DD-HH-MM-SS
+SCRIPT_NAME=$(basename "$0" | cut -d "." -f1) # Extract script name without the extension
+LOG_FILE="/tmp/${SCRIPT_NAME}-${TIME_STAMP}.log" # Define the log file path
 
 echo "Script started executing at timestamp: $TIME_STAMP"
 
@@ -30,7 +30,7 @@ if [ $ID -ne 0 ]; then
     echo -e "${R}You must run this script as root or using sudo.${N}" | tee -a "$LOG_FILE"
     exit 1
 fi
-dnf install mysql-server -y &>>$LOGFILE
+dnf install mysql-server -y &>>$LOG_FILE
 
 VALIDATE $? "Installing mysql"
 systemctl enable mysqld
