@@ -90,7 +90,23 @@ dnf install mysql -y | tee -a "$LOG_FILE"
 
 VALIDATE $? "TO load schema we require mysql client to install"
 
-mysql -h 172.31.85.105 -uroot -pExpenseApp@1 < /app/schema/backend.sql | tee -a "$LOG_FILE"
+#mysql_secure_installation --set-root-pass ExpenseApp@1 | tee -a "$LOG_FILE"
+#VALIDATE $? "Setting username and Password"
+
+#below command is used for idempotency
+
+mysql -h 172.31.85.105 -uroot -pExpenseApp@1 -e 'SHOW DATABASES;'| tee -a "$LOG_FILE"
+
+if [ $? -ne 0 ]
+then
+mysql_secure_installation --set-root-pass ExpenseApp@1 
+
+VALIDATE $? "Root password setup"
+
+else 
+echo -e "mysql password is already set $R ..Skipping $N"
+
+fi
 
 VALIDATE $? "to load the schema from backend.sql to database server"
 
