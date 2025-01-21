@@ -59,4 +59,6 @@ echo -e "mysql password is already set $R ..Skipping $N"
 fi
 
 
+echo "Thank you"
+
 
