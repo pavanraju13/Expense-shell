@@ -21,7 +21,7 @@ VALIDATE() {
         echo -e "$2.. ${G}...success${N}" | tee -a "$LOG_FILE" # Green for success
     else
         echo -e "$2.. ${R}...failure${N}" | tee -a "$LOG_FILE" # Red for failure
-        exit 1
+        
     fi
 }
 
