@@ -101,4 +101,6 @@ VALIDATE $? "restart the backend service"
 echo -e "${G} Completed the script successfully!${N}" | tee -a "$LOG_FILE"
 
 
+echo "Thank you"
+
 
