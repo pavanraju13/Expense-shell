@@ -35,3 +35,43 @@ fi
 # dnf install -y httpd
 # VALIDATE $? "Installing Apache HTTP Server"
 
+dnf module disable nodejs -y &>> "$LOG_FILE"
+VALIDATE $? "Disable nodejs"
+
+
+dnf module enable nodejs:20 -y &>> "$LOG_FILE"
+VALIDATE $? "Enable nodejs"
+
+dnf install nodejs -y &>> "$LOG_FILE"
+VALIDATE $? "installing nodejs"
+
+#here expense user is not a idempotemcy
+
+id expense &>> "$LOG_FILE"
+if [ $? -ne 0 ]
+then
+useradd expense &>> "$LOG_FILE" 
+echo "Please create the user"
+else 
+echo "User already created ..skipping"
+
+mkdir -p /app &>> "$LOG_FILE"
+VALIDATE "creating the app directory"
+
+curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
+VALIDATE $? "downloading the backend code"
+
+
+cd /app &>> "$LOG_FILE"
+unzip /tmp/backend.zip
+VALIDATE $? "unzipping the code"
+
+
+npm install &>> "$LOG_FILE"
+VALIDATE $? "installing nodejs dependencies"
+
+vim /etc/systemd/system/backend.service &>> "$LOG_FILE"
+
+
+
+
