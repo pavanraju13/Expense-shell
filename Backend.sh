@@ -13,6 +13,9 @@ R="\e[31m" # Red for failure
 B="\e[34m" # Blue for informational
 N="\e[0m"  # Reset to default
 
+echo " MYSQL PASSWORD :"
+read -s mysql_root_password
+
 # Function to validate command execution
 VALIDATE() {
     if [ $1 -eq 0 ]; then
@@ -54,6 +57,7 @@ useradd expense &>> "$LOG_FILE"
 echo "Please create the user"
 else 
 echo "User already created ..skipping"
+fi
 
 mkdir -p /app &>> "$LOG_FILE"
 VALIDATE "creating the app directory"
@@ -70,7 +74,35 @@ VALIDATE $? "unzipping the code"
 npm install &>> "$LOG_FILE"
 VALIDATE $? "installing nodejs dependencies"
 
-vim /etc/systemd/system/backend.service &>> "$LOG_FILE"
+cp /home/ec2-user/Expense-shell/backend.service /etc/systemd/system/backend.service &>> "$LOG_FILE"
+VALIDATE $? "copying backend service to systemd "
+
+systemctl daemon-reload &>> "$LOG_FILE"
+VALIDATE $? "To reload the systemctl service"
+
+systemctl start backend &>> "$LOG_FILE"
+VALIDATE $? "To start the backend"
+
+systemctl enable backend &>> "$LOG_FILE"
+VALIDATE $? "To enable the backend"
+
+dnf list installed mysql 
+if [ $? -ne 0 ]
+then
+dnf install mysql -y &>> "$LOG_FILE"
+echo "To install the mysql"
+else
+echo "mysql package already installed"
+fi
+
+mysql -h 172.31.85.105 -uroot -p${mysql_root_password} < /app/schema/backend.sql
+VALIDATE  $? "Loading schema"
+
+systemctl restart backend &>> "$LOG_FILE"
+VALIDATE $? "To restart the backend"
+
+echo -e "${G}Completed successfully!${N}" &>> "$LOG_FILE"
+
 
 
 
