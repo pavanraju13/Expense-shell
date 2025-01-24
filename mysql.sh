@@ -46,7 +46,7 @@ systemctl start mysqld &>>"$LOG_FILE"
 VALIDATE $? "Starting MySQL service"
 
 # Configure MySQL root password
-mysql -h 172.31.85.105 -uroot -p"${mysql_root_password}" -e 'SHOW DATABASES;' &>>"$LOG_FILE"
+mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" -e 'SHOW DATABASES;' &>>"$LOG_FILE"
 if [ $? -ne 0 ]; then
     echo "Configuring MySQL root password..." | tee -a "$LOG_FILE"
     mysql_secure_installation --set-root-pass="${mysql_root_password}" &>>"$LOG_FILE"
