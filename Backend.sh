@@ -1,19 +1,25 @@
 #!/bin/bash
 
-ID=$(id -u) # Get the current user ID
-TIME_STAMP=$(date +%F-%H-%M-%S) # Create a timestamp in the format YYYY-MM-DD-HH-MM-SS
-SCRIPT_NAME=$(basename "$0" | cut -d "." -f1) # Extract script name without the extension
-LOG_FILE="/tmp/${SCRIPT_NAME}-${TIME_STAMP}.log" # Define the log file path
+# Get the current user ID
+ID=$(id -u)
+# Create a timestamp in the format YYYY-MM-DD-HH-MM-SS
+TIME_STAMP=$(date +%F-%H-%M-%S)
+# Extract script name without the extension
+SCRIPT_NAME=$(basename "$0" | cut -d "." -f1)
+# Define the log file path
+LOG_FILE="/tmp/${SCRIPT_NAME}-${TIME_STAMP}.log"
 
+# Log the script start time
 echo "Script started executing at timestamp: $TIME_STAMP" | tee -a "$LOG_FILE"
 
-# Colors
+# Colors for output
 G="\e[32m" # Green for success
 R="\e[31m" # Red for failure
 B="\e[34m" # Blue for informational
 N="\e[0m"  # Reset to default
 
-echo " MYSQL PASSWORD :"
+# Prompt for MySQL root password securely
+echo "MYSQL PASSWORD:"
 read -s mysql_root_password
 
 # Function to validate command execution
@@ -21,7 +27,7 @@ VALIDATE() {
     if [ $1 -eq 0 ]; then
         echo -e "$2 ..${G}is successful${N}" | tee -a "$LOG_FILE"
     else
-        echo -e "$2 ..${G} is failure${N}" | tee -a "$LOG_FILE"
+        echo -e "$2 ..${R}is failure${N}" | tee -a "$LOG_FILE"
         exit 1
     fi
 }
@@ -34,76 +40,72 @@ else
     exit 1
 fi
 
-# Example commands to validate
-# dnf install -y httpd
-# VALIDATE $? "Installing Apache HTTP Server"
-
+# Disable and enable Node.js module
 dnf module disable nodejs -y &>> "$LOG_FILE"
-VALIDATE $? "Disable nodejs"
-
+VALIDATE $? "Disable Node.js module"
 
 dnf module enable nodejs:20 -y &>> "$LOG_FILE"
-VALIDATE $? "Enable nodejs"
+VALIDATE $? "Enable Node.js module version 20"
 
 dnf install nodejs -y &>> "$LOG_FILE"
-VALIDATE $? "installing nodejs"
+VALIDATE $? "Installing Node.js"
 
-#here expense user is not a idempotemcy
-
+# Ensure the 'expense' user exists
 id expense &>> "$LOG_FILE"
-if [ $? -ne 0 ]
-then
-useradd expense &>> "$LOG_FILE" 
-echo "Please create the user"
-else 
-echo "User already created ..skipping"
+if [ $? -ne 0 ]; then
+    useradd expense &>> "$LOG_FILE"
+    VALIDATE $? "Creating the 'expense' user"
+else
+    echo "User 'expense' already exists. Skipping user creation." | tee -a "$LOG_FILE"
 fi
 
+# Create the application directory
 mkdir -p /app &>> "$LOG_FILE"
-VALIDATE $? "creating the app directory"
+VALIDATE $? "Creating the app directory"
 
-curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip
-VALIDATE $? "downloading the backend code"
+# Download the backend code
+curl -o /tmp/backend.zip https://expense-builds.s3.us-east-1.amazonaws.com/expense-backend-v2.zip &>> "$LOG_FILE"
+VALIDATE $? "Downloading the backend code"
 
-
+# Unzip the backend code
 cd /app &>> "$LOG_FILE"
-unzip /tmp/backend.zip
-VALIDATE $? "unzipping the code"
+unzip -o /tmp/backend.zip &>> "$LOG_FILE"
+VALIDATE $? "Unzipping the backend code"
 
-
+# Install Node.js dependencies
 npm install &>> "$LOG_FILE"
-VALIDATE $? "installing nodejs dependencies"
+VALIDATE $? "Installing Node.js dependencies"
 
+# Copy the systemd service file for the backend
 cp /home/ec2-user/Expense-shell/backend.service /etc/systemd/system/backend.service &>> "$LOG_FILE"
-VALIDATE $? "copying backend service to systemd "
+VALIDATE $? "Copying backend service to systemd"
 
+# Reload systemd, start, and enable the backend service
 systemctl daemon-reload &>> "$LOG_FILE"
-VALIDATE $? "To reload the systemctl service"
+VALIDATE $? "Reloading systemd"
 
 systemctl start backend &>> "$LOG_FILE"
-VALIDATE $? "To start the backend"
+VALIDATE $? "Starting the backend service"
 
 systemctl enable backend &>> "$LOG_FILE"
-VALIDATE $? "To enable the backend"
+VALIDATE $? "Enabling the backend service"
 
-dnf list installed mysql 
-if [ $? -ne 0 ]
-then
-dnf install mysql -y &>> "$LOG_FILE"
-echo "To install the mysql"
+# Install MySQL if not already installed
+dnf list installed mysql &>> "$LOG_FILE"
+if [ $? -ne 0 ]; then
+    dnf install mysql -y &>> "$LOG_FILE"
+    VALIDATE $? "Installing MySQL"
 else
-echo "mysql package already installed"
+    echo "MySQL is already installed." | tee -a "$LOG_FILE"
 fi
 
-mysql -h 172.31.85.105 -uroot -p${mysql_root_password} < /app/schema/backend.sql
-VALIDATE  $? "Loading schema"
+# Load the schema into MySQL
+mysql -h 172.31.85.105 -uroot -p"${mysql_root_password}" < /app/schema/backend.sql &>> "$LOG_FILE"
+VALIDATE $? "Loading the database schema"
 
+# Restart the backend service
 systemctl restart backend &>> "$LOG_FILE"
-VALIDATE $? "To restart the backend"
+VALIDATE $? "Restarting the backend service"
 
-echo -e "${G}Completed successfully!${N}" &>> "$LOG_FILE"
-
-
-
-
-
+# Completion message
+echo -e "${G}Script completed successfully!${N}" | tee -a "$LOG_FILE"
