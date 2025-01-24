@@ -1,11 +1,18 @@
 [Unit]
-Description = Backend Service
+Description=Backend Service
+After=network.target
 
 [Service]
 User=expense
-Environment=DB_HOST="172.31.85.105"
+Group=expense
+Environment="DB_HOST=172.31.85.105"
+WorkingDirectory=/app
 ExecStart=/bin/node /app/index.js
+Restart=always
+RestartSec=5
 SyslogIdentifier=backend
+StandardOutput=syslog
+StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target
