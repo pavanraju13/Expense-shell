@@ -19,9 +19,9 @@ read -s mysql_root_password
 # Function to validate command execution
 VALIDATE() {
     if [ $1 -eq 0 ]; then
-        echo -e "${G}..$2 is successful${N}" | tee -a "$LOG_FILE"
+        echo -e "$2 ..${G}is successful${N}" | tee -a "$LOG_FILE"
     else
-        echo -e "${R}..$2 is failure${N}" | tee -a "$LOG_FILE"
+        echo -e "$2 ..${G} is failure${N}" | tee -a "$LOG_FILE"
         exit 1
     fi
 }
