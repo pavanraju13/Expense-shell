@@ -5,7 +5,7 @@ After=network.target
 [Service]
 User=expense
 Group=expense
-Environment="DB_HOST=172.31.85.105"
+Environment="DB_HOST=172.31.25.0"
 WorkingDirectory=/app
 ExecStart=/bin/node /app/index.js
 Restart=always
