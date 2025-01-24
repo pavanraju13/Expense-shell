@@ -1,65 +1,53 @@
 #!/bin/bash
 
-ID=$(id -u) # Get the current user ID
-TIME_STAMP=$(date +%F-%H-%M-%S) # Create a timestamp in the format YYYY-MM-DD-HH-MM-SS
-SCRIPT_NAME=$(basename "$0" | cut -d "." -f1) # Extract script name without the extension
-LOG_FILE="/tmp/${SCRIPT_NAME}-${TIME_STAMP}.log" # Define the log file path
-
-echo "Script started executing at timestamp: $TIME_STAMP" | tee -a "$LOG_FILE"
-
-# Colors
-G="\e[32m" # Green for success
-R="\e[31m" # Red for failure
-B="\e[34m" # Blue for informational
-N="\e[0m"  # Reset to default
-
-echo "MYSQL PASSWORD:"
+USERID=$(id -u)
+TIMESTAMP=$(date +%F-%H-%M-%S)
+SCRIPT_NAME=$(echo $0 | cut -d "." -f1)
+LOGFILE=/tmp/$SCRIPT_NAME-$TIMESTAMP.log
+R="\e[31m"
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+echo "Please enter DB password:"
 read -s mysql_root_password
 
-# Function to validate command execution
-VALIDATE() {
-    if [ $1 -eq 0 ]; then
-        echo -e "$2.. ${G}...success${N}" | tee -a "$LOG_FILE" # Green for success
-    else
-        echo -e "$2.. ${R}...failure${N}" | tee -a "$LOG_FILE" # Red for failure
+VALIDATE(){
+   if [ $1 -ne 0 ]
+   then
+        echo -e "$2...$R FAILURE $N"
         exit 1
+    else
+        echo -e "$2...$G SUCCESS $N"
     fi
 }
 
-# Ensure the script is run as root
-if [ $ID -ne 0 ]; then
-    echo -e "${R}You must run this script as root or using sudo.${N}" | tee -a "$LOG_FILE"
-    exit 1
-fi
-
-# Install MySQL server
-dnf install mysql-server -y | tee -a "$LOG_FILE"
-VALIDATE $? "Installing MySQL server"
-
-# Enable MySQL service
-systemctl enable mysqld
-VALIDATE $? "Enabling MySQL service"
-
-# Start MySQL service
-systemctl start mysqld | tee -a "$LOG_FILE"
-VALIDATE $? "Starting MySQL service"
-
-# Configure MySQL root password
-mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" -e 'SHOW DATABASES;' &>>"$LOG_FILE"
-if [ $? -ne 0 ]; then
-    echo "Configuring MySQL root password..." | tee -a "$LOG_FILE"
-    
-    # Set the root password directly (use ALTER USER for MySQL 5.7+)
-    mysql -h 172.31.25.0 -uroot -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysql_root_password}';" &>>"$LOG_FILE"
-    VALIDATE $? "Setting up MySQL root password"
-
-    # Secure MySQL by removing the test database and anonymous users
-    mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" -e "DELETE FROM mysql.db WHERE Db='test' OR Db='test\_%';" &>>"$LOG_FILE"
-    mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" -e "DROP USER IF EXISTS ''@'localhost';" &>>"$LOG_FILE"
-    mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" -e "FLUSH PRIVILEGES;" &>>"$LOG_FILE"
-    VALIDATE $? "Securing MySQL"
+if [ $USERID -ne 0 ]
+then
+    echo "Please run this script with root access."
+    exit 1 # manually exit if error comes.
 else
-    echo -e "${B}MySQL root password is already set. Skipping configuration.${N}" | tee -a "$LOG_FILE"
+    echo "You are super user."
 fi
 
-echo "Script completed successfully" | tee -a "$LOG_FILE"
+
+dnf install mysql-server -y &>>$LOGFILE
+VALIDATE $? "Installing MySQL Server"
+
+systemctl enable mysqld &>>$LOGFILE
+VALIDATE $? "Enabling MySQL Server"
+
+systemctl start mysqld &>>$LOGFILE
+VALIDATE $? "Starting MySQL Server"
+
+# mysql_secure_installation --set-root-pass ExpenseApp@1 &>>$LOGFILE
+# VALIDATE $? "Setting up root password"
+
+#Below code will be useful for idempotent nature
+mysql -h db.daws78s.online -uroot -p${mysql_root_password} -e 'show databases;' &>>$LOGFILE
+if [ $? -ne 0 ]
+then
+    mysql_secure_installation --set-root-pass ${mysql_root_password} &>>$LOGFILE
+    VALIDATE $? "MySQL Root password Setup"
+else
+    echo -e "MySQL Root password is already setup...$Y SKIPPING $N"
+fi
