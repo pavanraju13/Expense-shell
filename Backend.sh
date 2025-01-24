@@ -100,7 +100,7 @@ else
 fi
 
 # Load the schema into MySQL
-mysql -h 172.31.85.105 -uroot -p"${mysql_root_password}" < /app/schema/backend.sql &>> "$LOG_FILE"
+mysql -h 172.31.25.0 -uroot -p"${mysql_root_password}" < /app/schema/backend.sql &>> "$LOG_FILE"
 VALIDATE $? "Loading the database schema"
 
 # Restart the backend service
