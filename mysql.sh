@@ -2,7 +2,7 @@
 
 source ./common.sh
 
-failure
+
 
 
 check_root
