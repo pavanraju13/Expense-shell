@@ -22,7 +22,7 @@ systemctl start mysqld &>>$LOGFILE
 # VALIDATE $? "Setting up root password"
 
 #Below code will be useful for idempotent nature
-mysql -h 172.31.29.36 -uroot -p${mysql_root_password} -e 'show databases;' &>>$LOGFILE
+mysql -h 54.161.242.155 -uroot -p${mysql_root_password} -e 'show databases;' &>>$LOGFILE
 if [ $? -ne 0 ]
 then
     mysql_secure_installation --set-root-pass ${mysql_root_password} &>>$LOGFILE
